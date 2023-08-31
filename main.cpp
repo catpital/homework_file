@@ -4,20 +4,9 @@
 #include "user.cpp"
 #include "mess.cpp"
 #include <filesystem>
-//#include <stdio.h>
-//#include <stdlib.h>
 #include <sstream>
-//#include <io.h>
-//#include <sys/types.h>
-//#include <sys/stat.h>
-//#include <experimental/filesystem>
+
 using namespace std;
-//using namespace std::filesystem;
-//#if(defined(_MSC_VER) or (defined(__GNUC__) and (7 <= __GNUC_MAJOR__)))
-//using fs = ::std::filesystem;
-//#else
-//using fs = ::std::experimental::filesystem;
-//#endif
 namespace fs = std::filesystem;
 
 #if defined(_WIN32) 
@@ -83,7 +72,7 @@ int main()
 	{	// Для создания файла используем параметр ios::trunc
 		user_file = fstream((user_f_name.c_str()), ios::in | ios::out | ios::trunc);
 		// Для linux ставим признаки для использования только текущим пользователем
-		if (PLATFORM_NAME=="Linux") {
+		if (PLATFORM_NAME=="linux") {
 			
 			fs::permissions(user_f_name.c_str(), fs::perms::owner_exec | fs::perms::owner_read | fs::perms::owner_write, fs::perm_options::add);
 			fs::permissions(user_f_name.c_str(),
@@ -112,7 +101,7 @@ int main()
 			cout << v[i] << endl;
 			i++;
 		                                           }
-		user_file.close();
+		user_file.close(); // закрываем файл
 	}
 	else
 	    {
@@ -124,9 +113,17 @@ int main()
 	std::string file_mess_name = "message.txt";
 	fstream user_file2 = fstream((file_mess_name.c_str()), ios::in | ios::out);
 	if (!user_file2)
-		// Для создания файла используем параметр ios::trunc
+	{	// Для создания файла используем параметр ios::trunc
 		user_file2 = fstream((file_mess_name.c_str()), ios::in | ios::out | ios::trunc);
-	std::vector<Message> vm;
+		if (PLATFORM_NAME == "linux") {
+
+			fs::permissions(file_mess_name.c_str(), fs::perms::owner_exec | fs::perms::owner_read | fs::perms::owner_write, fs::perm_options::add);
+			fs::permissions(file_mess_name.c_str(),
+				fs::perms::group_read | fs::perms::group_write | fs::perms::group_exec | fs::perms::others_exec | fs::perms::others_all | fs::perms::others_write | fs::perms::others_read,
+				fs::perm_options::remove);
+		}
+	}
+		std::vector<Message> vm;
 	if (user_file2) {
 		Message obj2("привет!", "Alexander", "Alexey");
 		vm.push_back(obj2);
@@ -136,28 +133,20 @@ int main()
 		user_file2 << vm[1] << endl;
 		obj2 = { "Порагулять", "evlampiy", "Alexey" }; // т.к.для пробы взят txt файл и string, то нужно без пробелов
 		vm.push_back(obj2);
-		user_file2 << vm[2] << endl;
-		// Запишем данные по в файл
-	//	user_file2 << obj2 << endl;
+		user_file2 << vm[2] << endl;		// Запишем данные по в файл
+
 		// Чтобы считать данные из файла, надо установить позицию для чтения в начало файла
 		user_file2.seekg(0, ios_base::beg);
-		// Считываем данные из файла
-
-		int i = 0;
-
+		int i = 0; 
 		while (!user_file2.eof() && (i < vm.size())) { //читаем пока не конец файла и не превышен размер вектора
-			user_file2 >> obj2;
+			user_file2 >> obj2; // Считываем данные из файла
 			vm[i] = obj2;
 			cout << vm[i] << endl;
 			i++;
-		                                            }
-		user_file2.close();
-		/*for (unsigned i = 0; i < vm.size(); i++)
-		{
-			std::cout<<"\n";
-			std::cout << vm[i] << std::endl;
-		}*/
-
+		                                             }
+	
+		user_file2.close(); // закрываем файл
+	
 	}
 	else
 	{
