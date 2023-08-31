@@ -1,20 +1,42 @@
 #include <fstream>
 #include <iostream>
 #include <vector>
-//#include "write.h"
+#include "user.cpp"
+#include "mess.cpp"
+#include <filesystem>
+//#include <stdio.h>
+//#include <stdlib.h>
+#include <sstream>
+//#include <io.h>
+//#include <sys/types.h>
+//#include <sys/stat.h>
+//#include <experimental/filesystem>
 using namespace std;
+//using namespace std::filesystem;
+//#if(defined(_MSC_VER) or (defined(__GNUC__) and (7 <= __GNUC_MAJOR__)))
+//using fs = ::std::filesystem;
+//#else
+//using fs = ::std::experimental::filesystem;
+//#endif
+namespace fs = std::filesystem;
 
-class User {
-	string _name;
-	string _login;
-	string _pass;
+#if defined(_WIN32) 
+ #define PLATFORM_NAME "windows 32-bit" // Windows 32-bit
+ #elif defined(_WIN64)
+ #define PLATFORM_NAME "windows 64-bit" // Windows 64-bit
+ #elif defined(__ANDROID__)
+ #define PLATFORM_NAME "android"   // Android 
+ #elif defined(__linux__)
+ #define PLATFORM_NAME "linux"     // Debian, Ubuntu, Gentoo, Fedora, openSUSE, RedHat, Centos и другие
+ #elif TARGET_OS_IPHONE == 1
+ #define PLATFORM_NAME "ios"       // Apple iOS
+ #elif TARGET_OS_MAC == 1
+ #define PLATFORM_NAME "osx"       // Apple OSX
+ #else
+ #define PLATFORM_NAME  "OS not detected" // ОС не распознана
+ #endif
 
-public:
-	User(string name, string login, string pass) :_name(name), _login(login), _pass(pass) {}
 
-	friend fstream& operator >>(fstream& is, User& obj);
-	friend ostream& operator <<(ostream& os, const User& obj);
-};
 
 fstream& operator >>(fstream& is, User& obj)
 {
@@ -32,19 +54,6 @@ ostream& operator <<(ostream& os, const User& obj)
 	os << obj._pass;
 	return os;
 }
-
-class Message {
-	string _text;
-	string _sender;
-	string _receiver;
-
-public:
-	Message(string text, string sender, string receiver) :_text(text), _sender(sender), _receiver(receiver) {}
-
-	friend fstream& operator >>(fstream& is, Message& obj2);
-	friend ostream& operator <<(ostream& os, const Message& obj2);
-};
-
 
 fstream& operator >>(fstream& is, Message& obj2)
 {
@@ -67,11 +76,21 @@ ostream& operator <<(ostream& os, const Message& obj2)
 int main() 
 {
 	setlocale(LC_ALL, "");
+	
 	std::string user_f_name = "user.txt";
 	fstream user_file = fstream((user_f_name.c_str()), ios::in | ios::out);
 	if (!user_file)
-		// Для создания файла используем параметр ios::trunc
+	{	// Для создания файла используем параметр ios::trunc
 		user_file = fstream((user_f_name.c_str()), ios::in | ios::out | ios::trunc);
+		// Для linux ставим признаки для использования только текущим пользователем
+		if (PLATFORM_NAME=="Linux") {
+			
+			fs::permissions(user_f_name.c_str(), fs::perms::owner_exec | fs::perms::owner_read | fs::perms::owner_write, fs::perm_options::add);
+			fs::permissions(user_f_name.c_str(),
+				fs::perms::group_read | fs::perms::group_write | fs::perms::group_exec | fs::perms::others_exec | fs::perms::others_all | fs::perms::others_write | fs::perms::others_read,
+				fs::perm_options::remove);
+		                }
+	}
 	std::vector<User> v;
 	if (user_file) {
 		User obj("Alex", "qwerty", "12345"); //  формируем данные для класса user
